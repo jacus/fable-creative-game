@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Smocza Poczta – Wyspy Snów</title>
+<meta name="description" content="Smocza Poczta – bajkowa gra dla dzieci: leć smokiem po wyspach snów, dostarczaj listy i rozwiązuj zagadki. Dragon Mail – a dreamy flying game for kids with counting, letters and shapes.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%90%89%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@600;800&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="hud" class="hidden">
+  <div class="pill" id="starPill"><span class="ico">⭐</span><b id="stars">0</b></div>
+  <div class="pill" id="mailPill"><span class="ico">✉️</span><b id="mail">0</b></div>
+  <div class="pill combo hidden" id="comboPill">🔥 <b id="combo">x2</b></div>
+  <div class="spacer"></div>
+  <button class="ibtn" id="albumBtn" aria-label="Album" title="Album">📒</button>
+  <button class="ibtn" id="muteBtn" aria-label="Dźwięk" data-en-aria="Sound">🔊</button>
+  <button class="ibtn" id="pauseBtn" aria-label="Pauza" data-en-aria="Pause">⏸</button>
+</div>
+<div id="hint" class="hidden"></div>
+<div id="toast"></div>
+
+<div id="touch" class="hidden">
+  <button id="fireBtn" aria-label="Ogień" data-en-aria="Fire">🔥</button>
+</div>
+
+<div id="start" class="overlay">
+  <div class="card">
+    <div class="logo"><canvas id="logoCv" width="220" height="150"></canvas></div>
+    <h1 data-en="Dragon &lt;span class=&quot;pink&quot;&gt;Mail&lt;/span&gt;">Smocza <span class="pink">Poczta</span></h1>
+    <h2 data-en="Dream Islands">Wyspy Snów</h2>
+    <p class="story" data-en="✉️ &lt;b&gt;Post office of the clouds:&lt;/b&gt; Little dragon, the island friends are waiting for their letters! Fly through the dream sky, collect stars and solve the riddles the friends ask you.">✉️ <b>Poczta w chmurach:</b> Smoczku, przyjaciele na wyspach czekają na listy! Leć przez niebo snów, zbieraj gwiazdki i rozwiązuj zagadki, które zadają ci przyjaciele.</p>
+    <div class="controls keysOnly">
+      <div data-en="&lt;kbd&gt;Space&lt;/kbd&gt; / &lt;kbd&gt;↑&lt;/kbd&gt; hold – flap up, let go – glide down"><kbd>Spacja</kbd> / <kbd>↑</kbd> trzymaj – lecisz w górę, puść – szybujesz w dół</div>
+      <div data-en="&lt;kbd&gt;F&lt;/kbd&gt; / &lt;kbd&gt;Shift&lt;/kbd&gt; fire breath at grumpy clouds"><kbd>F</kbd> / <kbd>Shift</kbd> zioniesz ogniem na złe chmury</div>
+      <div data-en="&lt;kbd&gt;←&lt;/kbd&gt; &lt;kbd&gt;→&lt;/kbd&gt; slower / faster, &lt;kbd&gt;P&lt;/kbd&gt; pause, &lt;kbd&gt;M&lt;/kbd&gt; sound"><kbd>←</kbd> <kbd>→</kbd> wolniej / szybciej, <kbd>P</kbd> pauza, <kbd>M</kbd> dźwięk</div>
+    </div>
+    <div class="controls touchOnly">
+      <div data-en="👆 &lt;b&gt;Hold the screen&lt;/b&gt; – fly up, let go – glide down">👆 <b>Trzymaj palec na ekranie</b> – lecisz w górę, puść – szybujesz w dół</div>
+      <div data-en="🔥 &lt;b&gt;Fire&lt;/b&gt; button – blow away grumpy clouds">🔥 Przycisk <b>Ogień</b> – zdmuchnij złe chmury</div>
+    </div>
+    <ul class="tips">
+      <li data-en="💫 Fly through the &lt;b&gt;glowing ring&lt;/b&gt; above an island to land and deliver a letter.">💫 Przeleć przez <b>świecącą obręcz</b> nad wyspą, żeby wylądować i dostarczyć list.</li>
+      <li data-en="⭐ Stars in a row give a &lt;b&gt;combo&lt;/b&gt;. Correct answers light the island up and add a friend to your album.">⭐ Gwiazdki zbierane po kolei dają <b>combo</b>. Dobra odpowiedź rozświetla wyspę i dodaje przyjaciela do albumu.</li>
+      <li data-en="🐉 New dragon colours unlock as you deliver more letters. The sky changes from day to night, and the islands change too!">🐉 Nowe kolory smoka odblokowują się za dostarczone listy. Niebo zmienia się z dnia w noc, a wyspy też się zmieniają!</li>
+    </ul>
+    <div id="settings">
+      <div class="row"><span>Język / Language:</span>
+        <div class="seg" id="uiLang"><button data-v="pl">🇵🇱 Polski</button><button data-v="en">🇬🇧 English</button></div></div>
+      <div class="row"><span data-en="Age:">Wiek:</span>
+        <div class="seg" data-set="age"><button data-v="5" data-en="5 years">5 lat</button><button data-v="6">6</button><button data-v="7">7</button><button data-v="8" data-en="8+">8+</button></div></div>
+      <div class="row"><span data-en="Words:">Słowa:</span>
+        <div class="seg" data-set="words"><button data-v="pl">🇵🇱 Polski</button><button data-v="en">🇬🇧 English</button></div></div>
+      <div class="row"><span data-en="Read aloud:">Czytanie na głos:</span>
+        <div class="seg" data-set="voice"><button data-v="1" data-en="🔈 On">🔈 Tak</button><button data-v="0" data-en="Off">Nie</button></div></div>
+      <div class="row"><span data-en="Dragon:">Smok:</span>
+        <div class="seg skins" data-set="skin"></div></div>
+      <p id="voiceNote" class="note"></p>
+    </div>
+    <button id="playBtn" data-en="Fly! 🐉">Leć! 🐉</button>
+  </div>
+</div>
+
+<div id="quiz" class="overlay hidden">
+  <div class="card quiz">
+    <div class="who"><canvas id="whoCv" width="120" height="120"></canvas><div class="bubble"><div id="qName"></div><div id="qText"></div></div></div>
+    <div id="qPrompt"></div>
+    <div id="qOptions"></div>
+    <div class="qfoot"><button id="qSpeak" class="grey">🔈 <span data-en="Read again">Przeczytaj jeszcze raz</span></button></div>
+  </div>
+</div>
+
+<div id="pause" class="overlay hidden">
+  <div class="card pausecard">
+    <h2 data-en="Paused">Pauza</h2>
+    <button id="resumeBtn" data-en="Keep flying">Leć dalej</button>
+    <button id="menuBtn" class="grey" data-en="Back to start">Wróć na start</button>
+  </div>
+</div>
+
+<div id="album" class="overlay hidden">
+  <div class="card album">
+    <h2 data-en="📒 Friends album">📒 Album przyjaciół</h2>
+    <p class="note" id="albumNote"></p>
+    <div id="albumGrid"></div>
+    <button id="albumClose" data-en="Back">Wróć</button>
+  </div>
+</div>
+
+<script src="lang.js"></script>
+<script src="quiz.js"></script>
+<script src="audio.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
