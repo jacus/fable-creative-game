@@ -54,9 +54,12 @@ kbd{background:#fff;border:1px solid #d9cde8;border-bottom-width:3px;border-radi
 .seg button.on{background:var(--violet);border-color:var(--violet);color:#fff}
 .seg.skins button{width:40px;height:40px;padding:0;border-radius:50%;border-width:3px}
 .seg.skins button.lock{opacity:.5;font-size:16px}
-.seg.skins button.on{outline:3px solid var(--gold)}
+.seg.skins button.on,.seg.hats button.on{outline:3px solid var(--gold)}
+.seg.hats button{min-width:44px;height:40px;font-size:18px;display:flex;align-items:center;gap:4px}.seg.hats button small{font-size:11px;color:var(--ink-dim)}.seg.hats button.lock{opacity:.55}
+#settingsToggle{display:none}
+.card.dayend canvas{width:180px;height:122px}
 .note{font-size:12px;color:var(--ink-dim);margin:0}
-#playBtn,#resumeBtn,#albumClose{font-size:26px;padding:12px 40px;border-radius:999px;background:linear-gradient(180deg,#ffd45c,#ff9e2e);border:3px solid #fff;color:#4a2b00;box-shadow:0 6px 0 #c76e00,0 12px 24px rgba(0,0,0,.25);transition:transform .1s}
+#playBtn,#resumeBtn,#albumClose,#dayNext{font-size:26px;padding:12px 40px;border-radius:999px;background:linear-gradient(180deg,#ffd45c,#ff9e2e);border:3px solid #fff;color:#4a2b00;box-shadow:0 6px 0 #c76e00,0 12px 24px rgba(0,0,0,.25);transition:transform .1s}
 #playBtn:active,#resumeBtn:active{transform:translateY(4px);box-shadow:0 2px 0 #c76e00}
 button.grey{background:#ece6f5;border:2px solid #fff;color:var(--ink);border-radius:999px;padding:8px 18px;font-size:15px}
 
@@ -70,15 +73,20 @@ button.grey{background:#ece6f5;border:2px solid #fff;color:var(--ink);border-rad
 #qText{font-size:20px;font-weight:800;line-height:1.3}
 #qText b{color:var(--violet)}
 #qPrompt{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px;min-height:0;width:100%;font-size:40px;line-height:1.1}
+#qPrompt.many{font-size:30px;gap:4px}
+#qPrompt .pe{position:relative;display:inline-block}
+#qPrompt .pe.counted::after{content:attr(data-n);position:absolute;right:-6px;top:-8px;background:var(--violet);color:#fff;font-family:var(--display);font-size:14px;line-height:22px;width:22px;height:22px;border-radius:50%;text-align:center;animation:pop .3s}
 #qPrompt:empty{display:none}
 #qPrompt .letter,#qPrompt .word{font-family:var(--display);font-size:72px;color:var(--ink);background:#fff;border-radius:20px;padding:4px 26px;box-shadow:inset 0 -6px 0 #e7dcf3;letter-spacing:.06em}
 #qPrompt .word{font-size:52px}
 #qPrompt .math{display:flex;align-items:center;gap:10px;font-family:var(--display);font-size:44px}
 #qPrompt .math .grp{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;font-size:28px;background:#fff;border-radius:14px;padding:6px 8px}
 #qPrompt .math .grp.gone span{opacity:.3;filter:grayscale(1)}
-#qOptions{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;width:100%}
+#qOptions{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%}#qOptions[data-n="2"]{grid-template-columns:repeat(2,1fr)}#qOptions[data-n="4"]{grid-template-columns:repeat(2,1fr)}
+#qOptions button:disabled:not(.right){opacity:.4;filter:grayscale(.6)}
 #qOptions button{min-height:96px;background:#fff;border:3px solid #e7dcf3;border-radius:22px;font-size:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px;box-shadow:0 6px 0 #e7dcf3;transition:transform .1s;line-height:1.1}
 #qOptions button:active{transform:translateY(4px);box-shadow:0 2px 0 #e7dcf3}
+#qOptions button .sticker{display:grid;place-items:center;width:64px;height:64px;border-radius:50%;background:#f4eefc;box-shadow:inset 0 -4px 0 rgba(0,0,0,.06)}
 #qOptions button .lbl{font-family:var(--display);font-size:16px;color:var(--ink-dim)}
 #qOptions button.num{font-family:var(--display);font-size:52px;color:var(--ink)}
 #qOptions button svg{width:64px;height:64px}
@@ -99,6 +107,14 @@ button.grey{background:#ece6f5;border:2px solid #fff;color:var(--ink);border-rad
 #albumGrid .f.empty{opacity:.35}
 
 @media (max-height:640px){.card{padding:14px 16px;gap:6px}.card h1{font-size:34px}.logo{display:none}.tips{display:none}.story{font-size:13px}}
+@media (max-height:520px){
+  #start .card{padding:10px 14px;gap:5px}#start h1{font-size:30px}#start h2{font-size:15px}#start .story{display:none}#start .controls{font-size:12px;gap:2px}
+  #settingsToggle{display:inline-block;font-size:13px;padding:5px 12px}#settings:not(.open){display:none}#settings{gap:4px;padding:6px}
+  #playBtn{font-size:20px;padding:8px 30px}
+  .card.quiz{gap:6px;padding:10px 14px}.who canvas{width:64px;height:64px}#qText{font-size:16px}#qPrompt{font-size:28px}#qPrompt.many{font-size:22px}#qPrompt .letter{font-size:48px;padding:0 18px}#qPrompt .word{font-size:36px}#qPrompt .math{font-size:30px}#qPrompt .math .grp{font-size:20px;padding:3px 5px}
+  #qOptions button{min-height:66px;font-size:32px}#qOptions button .sticker{width:46px;height:46px}#qOptions button.num{font-size:36px}#qOptions button svg{width:44px;height:44px}#qOptions button .grp{font-size:18px}
+  .qfoot button{padding:4px 12px;font-size:13px}
+}
 @media (max-width:420px){#qOptions button{min-height:84px;font-size:38px}#qPrompt .letter{font-size:56px}}
 
 /* wide screens: two-column start card so the Play button is always visible */

@@ -46,10 +46,11 @@
       <div data-en="🔥 &lt;b&gt;Fire&lt;/b&gt; button – blow away grumpy clouds">🔥 Przycisk <b>Ogień</b> – zdmuchnij złe chmury</div>
     </div>
     <ul class="tips">
-      <li data-en="💫 Fly through the &lt;b&gt;glowing ring&lt;/b&gt; above an island to land and deliver a letter.">💫 Przeleć przez <b>świecącą obręcz</b> nad wyspą, żeby wylądować i dostarczyć list.</li>
-      <li data-en="⭐ Stars in a row give a &lt;b&gt;combo&lt;/b&gt;. Correct answers light the island up and add a friend to your album.">⭐ Gwiazdki zbierane po kolei dają <b>combo</b>. Dobra odpowiedź rozświetla wyspę i dodaje przyjaciela do albumu.</li>
+      <li data-en="💫 Fly through the &lt;b&gt;ring with the letter&lt;/b&gt; above an island to land and deliver it. 5 letters make a postman day!">💫 Przeleć przez <b>kółko z listem</b> nad wyspą, żeby wylądować i go dostarczyć. 5 listów to jeden dzień poczty!</li>
+      <li data-en="⭐ Stars in a row give a &lt;b&gt;combo&lt;/b&gt; and buy hats. A good answer changes the island for good and adds a friend to your album.">⭐ Gwiazdki zbierane po kolei dają <b>combo</b> i kupują czapki. Dobra odpowiedź na zawsze zmienia wyspę i dodaje przyjaciela do albumu.</li>
       <li data-en="🐉 New dragon colours unlock as you deliver more letters. The sky changes from day to night, and the islands change too!">🐉 Nowe kolory smoka odblokowują się za dostarczone listy. Niebo zmienia się z dnia w noc, a wyspy też się zmieniają!</li>
     </ul>
+    <button id="settingsToggle" class="grey" type="button">⚙️ <span data-en="Settings">Ustawienia</span></button>
     <div id="settings">
       <div class="row"><span>Język / Language:</span>
         <div class="seg" id="uiLang"><button data-v="pl">🇵🇱 Polski</button><button data-v="en">🇬🇧 English</button></div></div>
@@ -61,6 +62,8 @@
         <div class="seg" data-set="voice"><button data-v="1" data-en="🔈 On">🔈 Tak</button><button data-v="0" data-en="Off">Nie</button></div></div>
       <div class="row"><span data-en="Dragon:">Smok:</span>
         <div class="seg skins" data-set="skin"></div></div>
+      <div class="row"><span data-en="Hat (⭐ &lt;b id=&quot;menuStars&quot;&gt;0&lt;/b&gt;):">Czapka (⭐ <b id="menuStars">0</b>):</span>
+        <div class="seg hats" data-set="hat"></div></div>
       <p id="voiceNote" class="note"></p>
     </div>
     <button id="playBtn" data-en="Fly! 🐉">Leć! 🐉</button>
@@ -73,6 +76,16 @@
     <div id="qPrompt"></div>
     <div id="qOptions"></div>
     <div class="qfoot"><button id="qSpeak" class="grey">🔈 <span data-en="Read again">Przeczytaj jeszcze raz</span></button></div>
+  </div>
+</div>
+
+<div id="dayend" class="overlay hidden">
+  <div class="card dayend">
+    <canvas id="dayCv" width="220" height="150"></canvas>
+    <h2 data-en="All letters delivered! 🎉">Wszystkie listy dostarczone! 🎉</h2>
+    <p class="story"><span data-en="Postman day">Dzień poczty</span> <b id="dayN">1</b> <span data-en="is done. The dragon is sleepy… but there are more letters in the bag!">skończony. Smok jest śpiący… ale w torbie są kolejne listy!</span></p>
+    <p class="story">⭐ <b id="dayStars">0</b> <span data-en="stars – spend them on hats on the start screen.">gwiazdek – wydaj je na czapki na ekranie startowym.</span></p>
+    <button id="dayNext" data-en="Next day! ☀️">Następny dzień! ☀️</button>
   </div>
 </div>
 
