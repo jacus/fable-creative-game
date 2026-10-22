@@ -106,15 +106,17 @@ const GENERATORS = {
     };
   },
   letter(age, wl) {
-    const pool = age <= 6 ? WORDS.filter(x => EASY_FIRST.includes(first(x, wl)) && !/^(CH|SZ|CZ|RZ|DZ|TH|SH|WH)/.test(name(x, wl))) : WORDS;
+    const last = age >= 8 && R(2) === 0; // older kids: sometimes the LAST letter
+    const pool = age <= 6 ? WORDS.filter(x => EASY_FIRST.includes(first(x, wl)) && !/^(CH|SZ|CZ|RZ|DZ|TH|SH|WH)/.test(name(x, wl))) : WORDS.filter(x => !name(x, wl).includes(' '));
     const w = pick(pool);
-    const L = first(w, wl);
-    const others = sample(WORDS, age <= 5 ? 2 : 3, x => first(x, wl) === L);
+    const L = last ? name(w, wl).slice(-1) : first(w, wl);
+    const key = (x) => last ? name(x, wl).slice(-1) : first(x, wl);
+    const others = sample(WORDS, age <= 5 ? 2 : 3, x => key(x) === L || name(x, wl).includes(' '));
     const opts = shuffle([w, ...others]);
     return {
       type: 'letter', item: w.e,
-      text: { pl: `Co zaczyna się na literę <b>${L}</b>?`, en: `What starts with the letter <b>${L}</b>?` },
-      speak: { pl: `Co zaczyna się na literę ${L}?`, en: `What starts with the letter ${L}?` },
+      text: last ? { pl: `Co <b>kończy się</b> na literę <b>${L}</b>?`, en: `What <b>ends</b> with the letter <b>${L}</b>?` } : { pl: `Co zaczyna się na literę <b>${L}</b>?`, en: `What starts with the letter <b>${L}</b>?` },
+      speak: last ? { pl: `Co kończy się na literę ${L}?`, en: `What ends with the letter ${L}?` } : { pl: `Co zaczyna się na literę ${L}?`, en: `What starts with the letter ${L}?` },
       prompt: { kind: 'letter', letter: L },
       options: opts.map(x => ({ emoji: x.e, label: name(x, wl), say: { pl: name(x, 'pl'), en: name(x, 'en') } })),
       answer: opts.indexOf(w),
@@ -139,7 +141,7 @@ const GENERATORS = {
     const max = age <= 5 ? 5 : age <= 6 ? 8 : age <= 7 ? 10 : 20;
     const a = 1 + R(max - 1), b = 1 + R(max - a);
     const w = pick(WORDS);
-    const opts = numOptions(a + b, max);
+    const opts = numOptions(a + b, max, 3, 1);
     return {
       type: 'add', item: w.e,
       text: { pl: `Ile to razem?`, en: `How many altogether?` },
@@ -174,7 +176,7 @@ const GENERATORS = {
       text: { pl: `Co tu <b>nie pasuje</b>?`, en: `Which one <b>doesn't belong</b>?` },
       speak: { pl: `Co tu nie pasuje do reszty?`, en: `Which one doesn't belong with the others?` },
       prompt: null,
-      options: opts.map(e => ({ emoji: e })),
+      options: opts.map(e => { const w = WORDS.find(x => x.e === e); return { emoji: e, say: w ? { pl: w.pl, en: w.en } : null }; }),
       answer: opts.indexOf(odd),
     };
   },
@@ -204,7 +206,7 @@ const GENERATORS = {
       text: { pl: `Czego jest <b>więcej</b>?`, en: `Which has <b>more</b>?` },
       speak: { pl: `Czego jest więcej?`, en: `Which group has more?` },
       prompt: null,
-      options: opts.map(o => ({ emojis: Array(o.count).fill(o.emoji) })),
+      options: opts.map(o => ({ emojis: Array(o.count).fill(o.emoji), say: { pl: NUM.pl[o.count], en: NUM.en[o.count] } })),
       answer: a > b ? 0 : 1,
     };
   },

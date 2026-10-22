@@ -21,7 +21,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 @keyframes wob{from{transform:rotate(-3deg)}to{transform:rotate(3deg)}}
 .ibtn{width:44px;height:44px;border-radius:50%;background:rgba(255,248,240,.9);border:2px solid #fff;font-size:20px;display:grid;place-items:center;padding:0;box-shadow:0 4px 14px rgba(40,20,90,.25);pointer-events:auto}
 .ibtn:active{transform:scale(.92)}
-#hint{position:fixed;z-index:5;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 18px);transform:translateX(-50%);background:rgba(42,29,78,.75);color:#fff;border-radius:999px;padding:8px 18px;font-weight:800;font-size:15px;pointer-events:none;max-width:90%;text-align:center;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+#hint{position:fixed;z-index:5;left:50%;top:calc(env(safe-area-inset-top,0px) + 66px);transform:translateX(-50%);background:rgba(42,29,78,.75);color:#fff;border-radius:999px;padding:8px 18px;font-weight:800;font-size:15px;pointer-events:none;max-width:90%;text-align:center;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 #toast{position:fixed;z-index:6;left:50%;top:calc(env(safe-area-inset-top,0px) + 70px);transform:translate(-50%,-10px) scale(.9);opacity:0;background:var(--paper);color:var(--ink);border-radius:18px;padding:10px 22px;font-family:var(--display);font-weight:800;font-size:22px;box-shadow:0 10px 30px rgba(40,20,90,.35);transition:opacity .25s,transform .25s;pointer-events:none;white-space:nowrap}
 #toast.show{opacity:1;transform:translate(-50%,0) scale(1)}
 
@@ -79,8 +79,9 @@ button.grey{background:#ece6f5;border:2px solid #fff;color:var(--ink);border-rad
 #qPrompt:empty{display:none}
 #qPrompt .letter,#qPrompt .word{font-family:var(--display);font-size:72px;color:var(--ink);background:#fff;border-radius:20px;padding:4px 26px;box-shadow:inset 0 -6px 0 #e7dcf3;letter-spacing:.06em}
 #qPrompt .word{font-size:52px}
-#qPrompt .math{display:flex;align-items:center;gap:10px;font-family:var(--display);font-size:44px}
-#qPrompt .math .grp{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;font-size:28px;background:#fff;border-radius:14px;padding:6px 8px}
+#qPrompt .math{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px;font-family:var(--display);font-size:40px}
+#qPrompt .math .grp{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;font-size:24px;background:#fff;border-radius:14px;padding:5px 7px}
+@media (max-width:460px){#qPrompt .math{font-size:30px}#qPrompt .math .grp{font-size:18px;grid-template-columns:repeat(4,1fr)}}
 #qPrompt .math .grp.gone span{opacity:.3;filter:grayscale(1)}
 #qOptions{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%}#qOptions[data-n="2"]{grid-template-columns:repeat(2,1fr)}#qOptions[data-n="4"]{grid-template-columns:repeat(2,1fr)}
 #qOptions button:disabled:not(.right){opacity:.4;filter:grayscale(.6)}
@@ -89,7 +90,7 @@ button.grey{background:#ece6f5;border:2px solid #fff;color:var(--ink);border-rad
 #qOptions button .sticker{display:grid;place-items:center;width:64px;height:64px;border-radius:50%;background:#f4eefc;box-shadow:inset 0 -4px 0 rgba(0,0,0,.06)}
 #qOptions button .lbl{font-family:var(--display);font-size:16px;color:var(--ink-dim)}
 #qOptions button.num{font-family:var(--display);font-size:52px;color:var(--ink)}
-#qOptions button svg{width:64px;height:64px}
+#qOptions button svg{width:64px;height:64px;background:#efe8fa;border-radius:50%;padding:8px}
 #qOptions button .grp{display:grid;grid-template-columns:repeat(3,1fr);gap:0;font-size:26px}
 #qOptions button.right{background:#d8ffe9;border-color:var(--mint);box-shadow:0 6px 0 var(--mint-deep);animation:pop .4s}
 #qOptions button.wrong{background:#ffe0e0;border-color:#ff9c9c;animation:shake .4s}
@@ -109,7 +110,7 @@ button.grey{background:#ece6f5;border:2px solid #fff;color:var(--ink);border-rad
 @media (max-height:640px){.card{padding:14px 16px;gap:6px}.card h1{font-size:34px}.logo{display:none}.tips{display:none}.story{font-size:13px}}
 @media (max-height:520px){
   #start .card{padding:10px 14px;gap:5px}#start h1{font-size:30px}#start h2{font-size:15px}#start .story{display:none}#start .controls{font-size:12px;gap:2px}
-  #settingsToggle{display:inline-block;font-size:13px;padding:5px 12px}#settings:not(.open){display:none}#settings{gap:4px;padding:6px}
+  #settingsToggle{display:inline-block;font-size:13px;padding:5px 12px}#settings:not(.open){display:none}#settings{gap:4px;padding:6px;max-height:42vh;overflow-y:auto}
   #playBtn{font-size:20px;padding:8px 30px}
   .card.quiz{gap:6px;padding:10px 14px}.who canvas{width:64px;height:64px}#qText{font-size:16px}#qPrompt{font-size:28px}#qPrompt.many{font-size:22px}#qPrompt .letter{font-size:48px;padding:0 18px}#qPrompt .word{font-size:36px}#qPrompt .math{font-size:30px}#qPrompt .math .grp{font-size:20px;padding:3px 5px}
   #qOptions button{min-height:66px;font-size:32px}#qOptions button .sticker{width:46px;height:46px}#qOptions button.num{font-size:36px}#qOptions button svg{width:44px;height:44px}#qOptions button .grp{font-size:18px}
@@ -122,3 +123,5 @@ button.grey{background:#ece6f5;border:2px solid #fff;color:var(--ink);border-rad
   #start .card{max-width:900px;display:grid;grid-template-columns:1.1fr 1fr;grid-template-areas:"logo settings" "h1 settings" "h2 settings" "story settings" "controls settings" "tips play";column-gap:22px;align-items:start;text-align:left;padding:18px 26px 22px}
   #start .logo{grid-area:logo;justify-self:center}#start h1{grid-area:h1;text-align:center}#start h2{grid-area:h2;text-align:center}#start .story{grid-area:story}#start .controls{grid-area:controls}#start .tips{grid-area:tips}#start #settings{grid-area:settings;align-self:center}#start #playBtn{grid-area:play;justify-self:center;align-self:center}
 }
+
+.card.dayend .gifts{font-size:34px;line-height:1.2;margin:0;letter-spacing:.1em}

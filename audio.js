@@ -90,7 +90,7 @@ const Audio = (() => {
   // ---- speech
   let voiceOn = true;
   let pendingSpeak = null;
-  function speak(text, lang) {
+  function speak(text, lang, queue = false) {
     if (!voiceOn || muted || !('speechSynthesis' in window) || !text) return;
     try {
       const voices = speechSynthesis.getVoices();
@@ -100,18 +100,18 @@ const Audio = (() => {
         setTimeout(() => { if (pendingSpeak) { const p = pendingSpeak; pendingSpeak = null; sayNow(p[0], p[1], []); } }, 400);
         return;
       }
-      sayNow(text, lang, voices);
+      sayNow(text, lang, voices, queue);
     } catch (e) {}
   }
-  function sayNow(text, lang, voices) {
-    if (speechSynthesis.speaking || speechSynthesis.pending) speechSynthesis.cancel();
+  function sayNow(text, lang, voices, queue = false) {
+    if (!queue && (speechSynthesis.speaking || speechSynthesis.pending)) speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
     u.lang = lang === 'pl' ? 'pl-PL' : 'en-GB';
     u.rate = 0.92; u.pitch = 1.1;
     const pref = voices.filter(v => v.lang.toLowerCase().startsWith(lang === 'pl' ? 'pl' : 'en'));
     const v = pref.find(v => /Google|Natural|Premium|Enhanced|Zosia|Paulina|Daniel|Samantha/i.test(v.name)) || pref[0];
     if (v) u.voice = v;
-    setTimeout(() => speechSynthesis.speak(u), 60);
+    if (queue) speechSynthesis.speak(u); else setTimeout(() => speechSynthesis.speak(u), 60);
   }
   function hasVoice(lang) {
     try { return speechSynthesis.getVoices().some(v => v.lang.toLowerCase().startsWith(lang === 'pl' ? 'pl' : 'en')); } catch (e) { return false; }
