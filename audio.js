@@ -111,7 +111,7 @@ const Audio = (() => {
     const pref = voices.filter(v => v.lang.toLowerCase().startsWith(lang === 'pl' ? 'pl' : 'en'));
     const v = pref.find(v => /Google|Natural|Premium|Enhanced|Zosia|Paulina|Daniel|Samantha/i.test(v.name)) || pref[0];
     if (v) u.voice = v;
-    if (queue) speechSynthesis.speak(u); else setTimeout(() => speechSynthesis.speak(u), 60);
+    speechSynthesis.speak(u);
   }
   function hasVoice(lang) {
     try { return speechSynthesis.getVoices().some(v => v.lang.toLowerCase().startsWith(lang === 'pl' ? 'pl' : 'en')); } catch (e) { return false; }

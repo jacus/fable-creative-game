@@ -12,7 +12,11 @@ Open `index.html` (any static server, or straight from the folder). No build ste
 - **Touch:** hold the screen to fly up, let go to glide. 🔥 button for fire.
 - Fly through the glowing ring above an island to land. Answer the friend's riddle, get the letter delivered, the island lights up, a friend lands in your album.
 - Stars collected in a row build a **combo** (x2 / x3 / x4). Grumpy clouds knock it down; fire breath pops them into stars.
-- Delivered letters unlock dragon colours (3, 8, 15, 25). The sky cycles through dawn, day, sunset and night; island biomes change every four islands (meadow, candy, dino, ice, crystal).
+- Five letters make a **postman day**: a day-end card shows what the answers left on the islands and what is waiting next (next biome, next dragon colour, hats, friends still waiting for a letter).
+- Every correct answer **changes the island for good**: the roof takes the colour you chose, a shaped flag goes up, the pattern becomes bunting, counted things pile up by the house. Popped storm clouds leave a rainbow behind.
+- Delivered letters unlock dragon colours (3, 8, 15, 25); stars buy hats. The sky cycles through dawn, day, sunset and night; island biomes change every four islands (meadow, candy, dino, ice, crystal).
+- Progress persists: the next flight starts after the last island you reached, and islands you flew past come back first. If nobody touches the screen for a few seconds the dragon flies on by itself (and says so), so the youngest can still reach the riddles; autopilot earns almost no stars, so steering is what fills the jar.
+- Riddles are never a guessing game: a wrong tap names what was tapped and re-teaches (counting along with number badges for the youngest); after two misses the answer is shown kindly and the letter is still delivered.
 
 ## Languages
 
@@ -27,4 +31,8 @@ Open `index.html` (any static server, or straight from the folder). No build ste
 - `audio.js` – Web Audio synth (music box pad, effects) and speech.
 - `game.js` – world, procedural art (islands, creatures, dragon, clouds), physics, render pipeline with a low-res bloom pass.
 
-Settings and progress (stars, delivered letters, friends, unlocked dragons) live in `localStorage`. No network calls except Google Fonts.
+Settings and progress (stars, delivered letters, friends, unlocked dragons, hats, where the sky route continues) live in `localStorage`. No network calls except Google Fonts.
+
+## How it was made
+
+Built in three iterations, each followed by an independent, deliberately harsh review (played headlessly with Playwright on desktop, landscape and portrait phones; 160 000 generated riddles checked for correctness). Rendering tricks worth knowing: all sprites (islands, clouds, glow, sun rays, storm bodies) are pre-rendered once; a low-resolution emissive buffer is upscaled over the frame for the bloom; islands carry a night-tinted twin that is cross-faded with the sky; the logical world is 720 px tall and the viewport grows around it, so portrait phones get sky above and a cloud sea below instead of a squashed picture.

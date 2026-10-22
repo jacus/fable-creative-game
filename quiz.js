@@ -36,7 +36,7 @@ const SHAPES = [
   { k: 'circle', pl: 'koło', g: 2, en: 'circle', path: 'M50 8a42 42 0 1 1 0 84a42 42 0 1 1 0-84z' },
   { k: 'square', pl: 'kwadrat', g: 0, en: 'square', path: 'M12 12h76v76H12z' },
   { k: 'triangle', pl: 'trójkąt', g: 0, en: 'triangle', path: 'M50 8L94 90H6z' },
-  { k: 'star', pl: 'gwiazda', g: 1, en: 'star', path: 'M50 6l13 27 30 4-22 21 6 30-27-15-27 15 6-30L7 37l30-4z' },
+  { k: 'star', pl: 'gwiazda', acc: 'gwiazdę', g: 1, en: 'star', path: 'M50 6l13 27 30 4-22 21 6 30-27-15-27 15 6-30L7 37l30-4z' },
   { k: 'heart', pl: 'serce', g: 2, en: 'heart', path: 'M50 90C20 66 6 50 6 32A20 20 0 0 1 50 22a20 20 0 0 1 44 10c0 18-14 34-44 58z' },
   { k: 'rect', pl: 'prostokąt', g: 0, en: 'rectangle', path: 'M6 26h88v48H6z' },
 ];
@@ -49,6 +49,7 @@ const pick = (a) => a[R(a.length)];
 const shuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = R(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const sample = (a, n, not = () => false) => shuffle(a.filter(x => !not(x))).slice(0, n);
 const name = (w, l) => (l === 'en' ? w.en : w.pl);
+const sayOf = (w) => ({ pl: w.pl.toLowerCase(), en: w.en.toLowerCase() });
 const first = (w, l) => name(w, l)[0];
 
 // numbers in words so speech sounds natural and so pre-readers hear "three" not "3"
@@ -99,7 +100,7 @@ const GENERATORS = {
     return {
       type: 'shape', item: '🔷',
       text: { pl: `Znajdź: <b>${s.pl}</b>`, en: `Find the <b>${s.en}</b>` },
-      speak: { pl: `Znajdź ${s.pl}.`, en: `Find the ${s.en}.` },
+      speak: { pl: `Znajdź ${s.acc || s.pl}.`, en: `Find the ${s.en}.` },
       prompt: null,
       options: ss.map(x => ({ svg: SHAPE_SVG(x, pick(COLORS.slice(0, 7)).hex), say: { pl: x.pl, en: x.en } })),
       answer: ss.indexOf(s),
@@ -107,7 +108,8 @@ const GENERATORS = {
   },
   letter(age, wl) {
     const last = age >= 8 && R(2) === 0; // older kids: sometimes the LAST letter
-    const pool = age <= 6 ? WORDS.filter(x => EASY_FIRST.includes(first(x, wl)) && !/^(CH|SZ|CZ|RZ|DZ|TH|SH|WH)/.test(name(x, wl))) : WORDS.filter(x => !name(x, wl).includes(' '));
+    const soft = /^(CH|SZ|CZ|RZ|DZ|CI|SI|ZI|NI|TH|SH|WH)/;
+    const pool = age <= 6 ? WORDS.filter(x => EASY_FIRST.includes(first(x, wl)) && !soft.test(name(x, wl))) : WORDS.filter(x => !name(x, wl).includes(' ') && (last || !soft.test(name(x, wl))));
     const w = pick(pool);
     const L = last ? name(w, wl).slice(-1) : first(w, wl);
     const key = (x) => last ? name(x, wl).slice(-1) : first(x, wl);
@@ -118,7 +120,7 @@ const GENERATORS = {
       text: last ? { pl: `Co <b>kończy się</b> na literę <b>${L}</b>?`, en: `What <b>ends</b> with the letter <b>${L}</b>?` } : { pl: `Co zaczyna się na literę <b>${L}</b>?`, en: `What starts with the letter <b>${L}</b>?` },
       speak: last ? { pl: `Co kończy się na literę ${L}?`, en: `What ends with the letter ${L}?` } : { pl: `Co zaczyna się na literę ${L}?`, en: `What starts with the letter ${L}?` },
       prompt: { kind: 'letter', letter: L },
-      options: opts.map(x => ({ emoji: x.e, label: name(x, wl), say: { pl: name(x, 'pl'), en: name(x, 'en') } })),
+      options: opts.map(x => ({ emoji: x.e, label: name(x, wl), say: sayOf(x) })),
       answer: opts.indexOf(w),
     };
   },
@@ -133,7 +135,7 @@ const GENERATORS = {
       text: { pl: `Przeczytaj i znajdź obrazek:`, en: `Read it and find the picture:` },
       speak: { pl: `Przeczytaj słowo i znajdź obrazek.`, en: `Read the word and find the picture.` },
       prompt: { kind: 'word', word: wl === 'en' ? name(w, wl).toLowerCase() : name(w, wl) },
-      options: opts.map(x => ({ emoji: x.e, say: { pl: name(x, 'pl'), en: name(x, 'en') } })),
+      options: opts.map(x => ({ emoji: x.e, say: sayOf(x) })),
       answer: opts.indexOf(w),
     };
   },
@@ -176,7 +178,7 @@ const GENERATORS = {
       text: { pl: `Co tu <b>nie pasuje</b>?`, en: `Which one <b>doesn't belong</b>?` },
       speak: { pl: `Co tu nie pasuje do reszty?`, en: `Which one doesn't belong with the others?` },
       prompt: null,
-      options: opts.map(e => { const w = WORDS.find(x => x.e === e); return { emoji: e, say: w ? { pl: w.pl, en: w.en } : null }; }),
+      options: opts.map(e => { const w = WORDS.find(x => x.e === e); return { emoji: e, say: w ? sayOf(w) : null }; }),
       answer: opts.indexOf(odd),
     };
   },
@@ -192,7 +194,7 @@ const GENERATORS = {
       text: { pl: `Co będzie <b>dalej</b>?`, en: `What comes <b>next</b>?` },
       speak: { pl: `Co będzie dalej?`, en: `What comes next?` },
       prompt: { kind: 'emojis', items: [...seq.map(w => w.e), '❓'] },
-      options: opts.map(w => ({ emoji: w.e, say: { pl: w.pl, en: w.en } })),
+      options: opts.map(w => ({ emoji: w.e, say: sayOf(w) })),
       answer: opts.indexOf(ans),
     };
   },

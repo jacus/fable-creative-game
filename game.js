@@ -61,11 +61,14 @@ const HATS = [
   { id: 'crown', pl: 'Korona', en: 'Crown', cost: 100, icon: '👑' },
   { id: 'wizard', pl: 'Czapka czarodzieja', en: 'Wizard hat', cost: 150, icon: '🧙' },
 ];
+const HATS_IDS = HATS.map(h => h.id);
 const DAY_GOAL = 5; // letters per "postman day"
 let save = { stars: 0, mail: 0, friends: [], bestCombo: 0, days: 0, hats: ['none'], nextIsland: 0, missed: [], settings: { age: '5', words: LANG, voice: '1', skin: 'green', hat: 'none' } };
 try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s && typeof s === 'object') save = { ...save, ...s, settings: { ...save.settings, ...(s.settings || {}) } }; } catch (e) {}
 if (!Array.isArray(save.hats)) save.hats = ['none'];
-if (!Array.isArray(save.missed)) save.missed = []; if (typeof save.nextIsland !== 'number') save.nextIsland = 0;
+if (!Array.isArray(save.missed)) save.missed = []; if (!Array.isArray(save.friends)) save.friends = [];
+for (const k of ['stars', 'mail', 'bestCombo', 'days', 'nextIsland']) save[k] = Math.max(0, Math.floor(+save[k] || 0));
+save.missed = save.missed.filter(i => Number.isInteger(i)); if (!HATS_IDS.includes(save.settings.hat)) save.settings.hat = 'none';
 function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} }
 const S = save.settings;
 const skinOf = (id) => SKINS.find(s => s.id === id) || SKINS[0];
@@ -350,14 +353,14 @@ function drawDragon(x, px, py, ang, flap, skin, s, t, opts = {}) {
 const STORM_SPRITE = (() => { const c = document.createElement('canvas'); c.width = 200; c.height = 150; const x = c.getContext('2d'); x.translate(100, 70); for (const [ox, oy, rr] of [[-40, 10, 32], [0, -6, 42], [40, 10, 32], [-10, 20, 30], [22, 22, 28]]) { const g = x.createRadialGradient(ox - 8, oy - 10, 4, ox, oy, rr); g.addColorStop(0, '#a8a6c8'); g.addColorStop(1, '#5b5680'); x.fillStyle = g; x.beginPath(); x.arc(ox, oy, rr, 0, TAU); x.fill(); } return c; })();
 
 // ---------- world ----------
-const world = { islands: [], stars: [], storms: [], parts: [], birds: [], rainbows: [], gen: 0, firstIslandAt: 1100, seq: [] };
+const world = { islands: [], stars: [], storms: [], parts: [], birds: [], rainbows: [], gen: 0, firstIslandAt: 1100, seq: [], base: 0 };
 // k = position in this run, i = the island's identity (creature, biome). Missed islands come back first, then new ones.
-function islandIndexAt(k) { return k < world.seq.length ? world.seq[k] : save.nextIsland + (k - world.seq.length); }
+function islandIndexAt(k) { return k < world.seq.length ? world.seq[k] : world.base + (k - world.seq.length); }
 function islandAt(k) {
   const i = islandIndexAt(k);
   const r = mulberry(i * 1013 + 99);
   const w = 300 + Math.floor(r() * 180);
-  return { i, k, x: world.firstIslandAt + k * ISLAND_GAP + (r() - 0.5) * 300, top: 360 + (r() - 0.5) * 170, w, biome: biomeOf(i), creature: makeCreature(i), delivered: false, visited: false, light: 0, waterfall: r() < 0.5, bob: r() * TAU, gift: null, roofCol: null };
+  return { i, k, x: world.firstIslandAt + k * ISLAND_GAP + (r() - 0.5) * 300, top: 400 + (r() - 0.5) * 120, w, biome: biomeOf(i), creature: makeCreature(i), delivered: false, visited: false, light: 0, waterfall: r() < 0.5, bob: r() * TAU, gift: null, roofCol: null };
 }
 function generateUpTo(i) {
   while (world.gen <= i) {
@@ -373,7 +376,7 @@ function generateUpTo(i) {
       if (kind === 0) sy = lerp(baseY, ringY, t); // a gentle slope into the ring
       else if (kind === 1) sy = baseY + Math.sin(t * Math.PI) * -120;
       else sy = lerp(baseY, ringY, ease(t)) + Math.sin(t * TAU) * 40;
-      world.stars.push({ x: sx, y: clamp(sy, 70, 580), got: false, ph: r() * TAU, big: k === n - 1 });
+      world.stars.push({ x: sx, y: clamp(sy, 230, 560), got: false, ph: r() * TAU, big: k === n - 1 });
     }
     if (world.gen >= 2) { const nS = world.gen < 6 ? 1 : 1 + Math.floor(r() * 2); for (let k = 0; k < nS; k++) world.storms.push({ x: lerp(x0, x1, 0.25 + r() * 0.5) + k * 300, y: 140 + r() * 380, vx: (r() - 0.5) * 50, ph: r() * TAU, mood: 0, gone: 0 }); }
     world.gen++;
@@ -393,7 +396,7 @@ const input = { hold: false };
 const overlayOpen = () => ['#start', '#quiz', '#pause', '#album', '#dayend'].some(s => !$(s).classList.contains('hidden'));
 
 function resetRun() {
-  world.islands = []; world.stars = []; world.storms = []; world.parts = []; world.birds = []; world.rainbows = []; world.gen = 0; islandCache.clear(); world.seq = save.missed.slice(0, 6);
+  world.islands = []; world.stars = []; world.storms = []; world.parts = []; world.birds = []; world.rainbows = []; world.gen = 0; islandCache.clear(); world.seq = save.missed.slice(0, 6); world.base = save.nextIsland;
   dragon.x = 0; dragon.y = 360; dragon.vy = 0; dragon.dizzy = 0; dragon.state = 'fly'; dragon.fire = 0; dragon.idle = 0; dragon.auto = false;
   cam.x = dragon.x - W * 0.32; cam.y = 0; combo = 0; dayT = 0.12; time = 0; dayMail = 0; dayGifts = [];
   generateUpTo(3);
@@ -409,7 +412,7 @@ function hint(msg) { const el = $('#hint'); if (!msg) { el.classList.add('hidden
 function bump(sel) { const el = $(sel); el.classList.add('bump'); setTimeout(() => el.classList.remove('bump'), 150); }
 function updateHud() { $('#stars').textContent = stars; $('#mail').textContent = `${dayMail}/${DAY_GOAL}`; const m = multiplier(); $('#comboPill').classList.toggle('hidden', m < 2); $('#combo').textContent = 'x' + m; }
 const multiplier = () => combo >= 12 ? 4 : combo >= 8 ? 3 : combo >= 4 ? 2 : 1;
-let persistT = 0, moodT = 0, autoHinted = false;
+let persistT = 0, moodT = 0, autoHinted = -99;
 function addStars(n) { stars = Math.max(0, stars + n); save.stars = stars; updateHud(); bump('#starPill'); persistT = 2; }
 
 // ---------- update ----------
@@ -419,7 +422,7 @@ function update(dt) {
   if (shake > 0) shake = Math.max(0, shake - dt * 3);
   if (persistT > 0) { persistT -= dt; if (persistT <= 0) persist(); }
   if (dragon.state === 'fly') { comboT -= dt; if (comboT <= 0 && combo > 0) { combo = 0; updateHud(); } }
-  if ((moodT += dt) > 2) { moodT = 0; const bi = Math.max(0, Math.floor((dragon.x - world.firstIslandAt) / ISLAND_GAP)); Audio.setMood({ biome: Math.floor(bi / 4), night: palette(dayT).night }); }
+  if ((moodT += dt) > 2) { moodT = 0; const near = world.islands.find(o => o.x > dragon.x - 400) || world.islands[0]; Audio.setMood({ biome: near ? Math.floor(near.i / 4) : 0, night: palette(dayT).night }); }
 
   if (dragon.state === 'fly') {
     const target = clamp(230 + speedKey * 90, 150, 330);
@@ -435,7 +438,7 @@ function update(dt) {
       const st = world.stars.find(s => !s.got && s.x > dragon.x + 40); want = next && dragon.x > next.x - 500 ? next.top - 170 : st ? st.y : 360;
       const storm = world.storms.find(s => s.gone === 0 && s.x > dragon.x && s.x < dragon.x + 320 && Math.abs(s.y - dragon.y) < 150);
       if (storm) { if (Math.abs(storm.y - want) < 150) want = storm.y > 360 ? storm.y - 180 : storm.y + 180; if (storm.x < dragon.x + 300 && Math.abs(storm.y - dragon.y) < 110) fireBreath(false); }
-      if (!autoHinted) { autoHinted = true; hint(tr(isTouch ? 'Smok leci sam… dotknij ekranu, żeby sterować! 👆' : 'Smok leci sam… wciśnij Spację, żeby sterować! 👆', isTouch ? 'The dragon flies by itself… touch the screen to steer! 👆' : 'The dragon flies by itself… press Space to steer! 👆')); setTimeout(() => hint(null), 5000); }
+      if (time - autoHinted > 20) { autoHinted = time; hint(tr(isTouch ? 'Smok leci sam… dotknij ekranu, żeby sterować! 👆' : 'Smok leci sam… wciśnij Spację, żeby sterować! 👆', isTouch ? 'The dragon flies by itself… touch the screen to steer! 👆' : 'The dragon flies by itself… press Space to steer! 👆')); setTimeout(() => hint(null), 5000); }
     }
     const flapping = (input.hold || (want !== null && dragon.y > want + 10)) && dragon.dizzy <= 0;
     if (flapping) { dragon.vy -= lift * dt; dragon.flap += dt * 14; } else dragon.flap += dt * 5;
@@ -444,7 +447,7 @@ function update(dt) {
     // a small landing assist right at the ring, so a near miss still counts (not a magnet across the screen)
     if (next) { const rx = next.x, ry = next.top - 170; if (dragon.x > rx - 120 && dragon.x < rx && Math.abs(dragon.y - ry) < 110) dragon.vy = lerp(dragon.vy, clamp((ry - dragon.y) * 2.5, -330, 330), dt * 1.4); }
     dragon.y += dragon.vy * dt;
-    for (const o of world.islands) { if (Math.abs(o.x - dragon.x) < o.w * 0.5 + 30 && dragon.y > o.top - 70 && dragon.y < o.top + 120) { dragon.y = Math.min(dragon.y, o.top - 70); if (dragon.vy > 0) dragon.vy = -120; } }
+    for (const o of world.islands) { const ahead = o.x - o.w * 0.5 - dragon.x; if (ahead < 160 && ahead > -o.w - 30 && dragon.y > o.top - 80 && dragon.y < o.top + 260) { dragon.y = Math.max(o.top - 80, dragon.y - 560 * dt); if (dragon.vy > -60) dragon.vy = -60; } }
     const ceil = 60 + Math.max(0, 125 - OY); if (dragon.y < ceil) { dragon.y = ceil; dragon.vy = Math.max(0, dragon.vy); }
     if (dragon.y > 560) dragon.vy -= (dragon.y - 560) * 14 * dt; // soft floor: the cloud sea pushes you up
     if (dragon.y > 600) { dragon.y = 600; dragon.vy = Math.min(0, dragon.vy); }
@@ -461,8 +464,8 @@ function update(dt) {
       if (s.got) continue;
       const dx = s.x - dragon.x, dy = s.y - dragon.y;
       if (dx * dx + dy * dy < 70 * 70 || (multiplier() > 1 && dx * dx + dy * dy < 110 * 110)) {
-        s.got = true; combo++; comboT = 3; bestCombo = Math.max(bestCombo, combo); save.bestCombo = bestCombo;
-        const v = (s.big ? 5 : 1) * multiplier(); addStars(v); Audio.sfx.star(combo);
+        s.got = true; if (!dragon.auto) { combo++; comboT = 3; bestCombo = Math.max(bestCombo, combo); save.bestCombo = bestCombo; }
+        const v = dragon.auto ? 1 : (s.big ? 5 : 1) * multiplier(); addStars(v); Audio.sfx.star(combo);
         burst(s.x, s.y, ['#ffd93d', '#fff6c2', '#ff9f2e'], s.big ? 30 : 10, 180, 80);
         if (combo === 4 || combo === 8 || combo === 12) { toast(`Combo x${multiplier()}! 🔥`); Audio.sfx.ring(); }
       }
@@ -503,11 +506,11 @@ function update(dt) {
   for (const p of world.parts) { p.life += dt; p.vy += (p.g || 0) * dt; p.x += p.vx * dt; p.y += p.vy * dt; if (p.kind === 'conf') { p.rot += p.vr * dt; p.vx *= 0.98; } }
   world.parts = world.parts.filter(p => p.life < p.max);
   const landedView = (dragon.state === 'landed' || dragon.state === 'landing') && currentIsl ? currentIsl.x - W * 0.5 : dragon.x - W * 0.32;
-  cam.x = dragon.state === 'fly' ? dragon.x - W * 0.32 : lerp(cam.x, landedView, dt * 2.5);
+  cam.x = dragon.state === 'fly' && Math.abs(cam.x - landedView) < 2 ? landedView : lerp(cam.x, landedView, dt * (dragon.state === 'fly' ? 5 : 2.5));
   cam.y = lerp(cam.y, (dragon.y - 360) * 0.18, dt * 3);
 }
 function popStorm(s) {
-  s.gone = 0.01; Audio.sfx.pop(); addStars(3); shake = 0.4;
+  s.gone = 0.01; Audio.sfx.pop(); addStars(dragon.auto ? 1 : 3); shake = 0.4;
   burst(s.x, s.y, ['#ff6fb5', '#ffd93d', '#5fe3b0', '#4fb8ff', '#b46cff', '#fff'], 36, 320, 200);
   for (let k = 0; k < 4; k++) world.stars.push({ x: s.x + 120 + k * 70, y: s.y - 40 + Math.sin(k) * 50, got: false, ph: k, big: false });
   world.rainbows.push({ x: s.x, y: s.y, r: 120 + Math.random() * 80, t: 0 }); // a rainbow stays where the cloud was
@@ -615,11 +618,20 @@ function deliver(bonus) {
   if (dayMail >= DAY_GOAL) { setTimeout(dayEnd, 1600); return; }
   setTimeout(() => { dragon.state = 'takeoff'; dragon.landT = 0; dragon.from = { x: dragon.x, y: dragon.y }; }, 2600);
 }
+function promise() { // what is waiting next: computed from real progress
+  const nextI = save.nextIsland, cur = Math.floor(nextI / 4), toBiome = (cur + 1) * 4 - nextI, b = BIOMES[(cur + 1) % BIOMES.length];
+  const skin = SKINS.find(s => s.unlock > mail), hat = HATS.find(h => !save.hats.includes(h.id));
+  const parts = [tr(`${b.pl} za ${toBiome} ${toBiome === 1 ? 'wyspę' : toBiome < 5 ? 'wyspy' : 'wysp'} 🏝️`, `${b.en} in ${toBiome} island${toBiome === 1 ? '' : 's'} 🏝️`)];
+  if (skin) parts.push(tr(`smok ${skin.pl} za ${skin.unlock - mail} ${skin.unlock - mail === 1 ? 'list' : skin.unlock - mail < 5 ? 'listy' : 'listów'} 🐉`, `the ${skin.en} dragon in ${skin.unlock - mail} letter${skin.unlock - mail === 1 ? '' : 's'} 🐉`));
+  if (hat && stars < hat.cost) parts.push(tr(`${hat.pl.toLowerCase()} za ${hat.cost - stars} ⭐`, `the ${hat.en.toLowerCase()} in ${hat.cost - stars} ⭐`));
+  if (save.missed.length) parts.push(tr(`${save.missed.length} ${save.missed.length === 1 ? 'przyjaciel czeka' : 'przyjaciół czeka'} na list 💌`, `${save.missed.length} friend${save.missed.length === 1 ? '' : 's'} waiting for a letter 💌`));
+  return parts.join(' · ');
+}
 function dayEnd() {
   save.days = (save.days || 0) + 1; persist(); paused = true;
-  $('#dayN').textContent = save.days; $('#dayStars').textContent = stars; $('#dayGifts').textContent = dayGifts.join(' ');
+  $('#dayN').textContent = save.days; $('#dayStars').textContent = stars; $('#dayGifts').textContent = dayGifts.join(' '); $('#dayPromise').textContent = tr('Następnym razem: ', 'Next time: ') + promise();
   const k = $('#dayCv'), x = k.getContext('2d'); x.clearRect(0, 0, 220, 150); drawDragon(x, 100, 86, 0, 0, skinOf(S.skin), 0.78, 0, { sleepy: true, hat: S.hat });
-  $('#dayend').classList.remove('hidden'); Audio.sfx.unlock(); confetti(dragon.x + 60, dragon.y - 40, 80);
+  $('#pause').classList.add('hidden'); $('#dayend').classList.remove('hidden'); Audio.sfx.unlock(); confetti(dragon.x + 60, dragon.y - 40, 80);
   Audio.speak(tr(`Wszystkie listy dostarczone! Dzień ${save.days} skończony. Brawo, smoczku!`, `All letters delivered! Day ${save.days} is done. Well done, little dragon!`), LANG);
 }
 $('#dayNext').addEventListener('click', () => { $('#dayend').classList.add('hidden'); paused = false; dayMail = 0; dayGifts = []; updateHud(); Audio.resume(); dragon.state = 'takeoff'; dragon.landT = 0; dragon.from = { x: dragon.x, y: dragon.y }; });
@@ -844,7 +856,7 @@ function buildSkins() {
     });
     hs.appendChild(b);
   }
-  $('#menuStars').textContent = stars;
+  $('#menuStars').textContent = stars; $('#startPromise').textContent = (save.mail ? tr('Czeka na ciebie: ', 'Waiting for you: ') : tr('Na początek: ', 'To begin: ')) + promise();
 }
 function buildSettings() {
   document.querySelectorAll('#settings .seg[data-set]').forEach(seg => {
