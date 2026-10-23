@@ -87,38 +87,50 @@ const Audio = (() => {
     click() { tone({ f: 800, type: 'sine', d: 0.08, v: 0.12 }); },
   };
 
-  // ---- speech
-  let voiceOn = true;
-  let pendingSpeak = null;
+  // ---- speech: a small sequential queue (utterance → onend → next). The first call must happen inside a user
+  // gesture (iOS); we never defer it. Android Chrome loses an utterance spoken right after cancel(), so we wait a tick.
+  let voiceOn = true, sq = [], speaking = false, lastErr = '', spoken = 0, unlocked = false;
+  const synth = () => ('speechSynthesis' in window ? window.speechSynthesis : null);
+  function pickVoice(lang) {
+    const s = synth(); if (!s) return null;
+    const pref = s.getVoices().filter(v => v.lang.replace('_', '-').toLowerCase().startsWith(lang === 'pl' ? 'pl' : 'en'));
+    return pref.find(v => /Google|Natural|Premium|Enhanced|Zosia|Ewa|Paulina|Daniel|Samantha|Siri/i.test(v.name)) || pref.find(v => v.localService) || pref[0] || null;
+  }
   function speak(text, lang, queue = false) {
-    if (!voiceOn || muted || !('speechSynthesis' in window) || !text) return;
+    const s = synth();
+    if (!voiceOn || muted || !s || !text) return;
     try {
-      const voices = speechSynthesis.getVoices();
-      if (!voices.length) { // Chrome: list not ready yet → speak once it is
-        pendingSpeak = [text, lang];
-        speechSynthesis.addEventListener('voiceschanged', () => { if (pendingSpeak) { const p = pendingSpeak; pendingSpeak = null; speak(p[0], p[1]); } }, { once: true });
-        setTimeout(() => { if (pendingSpeak) { const p = pendingSpeak; pendingSpeak = null; sayNow(p[0], p[1], []); } }, 400);
-        return;
-      }
-      sayNow(text, lang, voices, queue);
-    } catch (e) {}
+      if (!queue) { sq = []; if (s.speaking || s.pending) { s.cancel(); speaking = false; } }
+      sq.push({ text, lang });
+      if (!speaking) drain(!queue && (s.speaking || s.pending));
+    } catch (e) { lastErr = String(e); }
   }
-  function sayNow(text, lang, voices, queue = false) {
-    if (!queue && (speechSynthesis.speaking || speechSynthesis.pending)) speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = lang === 'pl' ? 'pl-PL' : 'en-GB';
-    u.rate = 0.92; u.pitch = 1.1;
-    const pref = voices.filter(v => v.lang.toLowerCase().startsWith(lang === 'pl' ? 'pl' : 'en'));
-    const v = pref.find(v => /Google|Natural|Premium|Enhanced|Zosia|Paulina|Daniel|Samantha/i.test(v.name)) || pref[0];
-    if (v) u.voice = v;
-    speechSynthesis.speak(u);
+  function drain(afterCancel) {
+    const s = synth(); const item = sq.shift(); if (!item || !s) { speaking = false; return; }
+    speaking = true;
+    const go = () => {
+      try {
+        if (s.paused) s.resume();
+        const u = new SpeechSynthesisUtterance(item.text);
+        u.lang = item.lang === 'pl' ? 'pl-PL' : 'en-GB'; u.rate = 0.92; u.pitch = 1.05; u.volume = 1;
+        const v = pickVoice(item.lang); if (v) u.voice = v;
+        let done = false; const next = () => { if (done) return; done = true; clearTimeout(guard); setTimeout(() => drain(false), 80); };
+        u.onend = () => { spoken++; next(); }; u.onerror = (e) => { lastErr = e.error || 'error'; next(); };
+        const guard = setTimeout(next, 1200 + item.text.length * 110); // engines sometimes never fire onend
+        s.speak(u); unlocked = true;
+      } catch (e) { lastErr = String(e); speaking = false; }
+    };
+    if (afterCancel) setTimeout(go, 120); else go();
   }
-  function hasVoice(lang) {
-    try { return speechSynthesis.getVoices().some(v => v.lang.toLowerCase().startsWith(lang === 'pl' ? 'pl' : 'en')); } catch (e) { return false; }
+  function unlock() { // call inside the Play tap: wakes the engine on iOS without saying anything audible
+    const s = synth(); if (!s || unlocked) return;
+    try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; s.speak(u); unlocked = true; } catch (e) {}
   }
+  function hasVoice(lang) { return !!pickVoice(lang); }
+  function voiceInfo(lang) { const s = synth(); if (!s) return { supported: false }; const v = pickVoice(lang); return { supported: true, voices: s.getVoices().length, voice: v ? v.name : null, lastErr, spoken }; }
 
   function setMuted(m) { muted = m; if (master) master.gain.setTargetAtTime(m ? 0 : 0.8, ctx.currentTime, 0.05); if (m) { try { speechSynthesis.cancel(); } catch (e) {} } }
   function setVoice(v) { voiceOn = v; }
   function setMusic(m) { musicOn = m; if (musicGain) musicGain.gain.setTargetAtTime(m ? 0.5 : 0, ctx.currentTime, 0.2); }
-  return { init, resume, startMusic, setMood, sfx, speak, hasVoice, setMuted, setVoice, setMusic, get muted() { return muted; } };
+  return { init, resume, startMusic, setMood, sfx, speak, unlock, hasVoice, voiceInfo, setMuted, setVoice, setMusic, get muted() { return muted; } };
 })();
