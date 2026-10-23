@@ -896,10 +896,12 @@ function buildSettings() {
 function updateVoiceNote() {
   const n = $('#voiceNote');
   if (S.voice !== '1') { n.textContent = tr('Zagadki będą tylko na ekranie.', 'Riddles will be shown on screen only.'); return; }
-  const ok = Audio.hasVoice(LANG);
-  n.textContent = ok ? tr('Zagadki są czytane na głos – można grać bez umiejętności czytania.', 'Riddles are read aloud, so the game works before your child can read.')
-    : tr('Jeśli przeglądarka ma polski głos, zagadki będą czytane na głos (na telefonie zwykle tak).', 'If the browser has an English voice, riddles are read aloud (phones usually do).');
+  const info = Audio.voiceInfo(LANG);
+  if (!info.supported) { n.textContent = tr('Ta przeglądarka nie umie czytać na głos – zagadki będą tylko na ekranie.', 'This browser cannot read aloud – riddles will be shown on screen only.'); return; }
+  const found = info.voice ? tr(`Głos: ${info.voice}.`, `Voice: ${info.voice}.`) : tr(`Brak polskiego głosu wśród ${info.voices} głosów – spróbuję głosu domyślnego. Na telefonie zainstaluj polski głos w ustawieniach systemu (np. „Synteza mowy Google”).`, `No English voice among ${info.voices} voices – the default voice will be tried.`);
+  n.textContent = tr('Zagadki są czytane na głos. ', 'Riddles are read aloud. ') + found + (info.lastErr ? tr(` Ostatni błąd: ${info.lastErr}.`, ` Last error: ${info.lastErr}.`) : '');
 }
+$('#voiceTest').addEventListener('click', () => { Audio.setVoice(true); Audio.unlock(); Audio.speak(tr('Cześć! Jestem smoczek i czytam zagadki na głos.', 'Hello! I am the little dragon and I read the riddles aloud.'), LANG); setTimeout(updateVoiceNote, 2500); });
 if ('speechSynthesis' in window) speechSynthesis.addEventListener('voiceschanged', updateVoiceNote);
 function openAlbum() {
   if (!$('#album').classList.contains('hidden')) return;
@@ -925,7 +927,7 @@ $('#muteBtn').addEventListener('click', toggleMute);
 $('#menuBtn').addEventListener('click', () => { paused = false; $('#pause').classList.add('hidden'); running = false; $('#hud').classList.add('hidden'); $('#touch').classList.add('hidden'); $('#start').classList.remove('hidden'); hint(null); persist(); buildSkins(); });
 $('#qSpeak').addEventListener('click', () => { if (currentQ) Audio.speak(currentQ.speak[LANG], LANG); });
 $('#playBtn').addEventListener('click', () => {
-  Audio.init(); Audio.resume(); Audio.setVoice(S.voice === '1'); Audio.startMusic(); Audio.sfx.ring();
+  Audio.init(); Audio.resume(); Audio.setVoice(S.voice === '1'); Audio.unlock(); Audio.startMusic(); Audio.sfx.ring();
   $('#start').classList.add('hidden'); $('#hud').classList.remove('hidden'); $('#touch').classList.remove('hidden');
   resetRun(); running = true; paused = false; updateHud();
   hint(tr(isTouch ? 'Trzymaj palec, żeby lecieć w górę. Leć przez kółko z listem! 💫' : 'Trzymaj Spację, żeby lecieć w górę. Leć przez kółko z listem! 💫', isTouch ? 'Hold the screen to fly up. Fly through the ring with the letter! 💫' : 'Hold Space to fly up. Fly through the ring with the letter! 💫'));
